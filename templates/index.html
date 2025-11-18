@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>World University Rankings 2024</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
+      rel="stylesheet">
+    
+    <style>
+        /* Modern Sortable Column Styling */
+        th.sortable {
+            cursor: pointer;
+            user-select: none;
+            transition: background 0.2s ease;
+            position: relative;
+        }
+
+        th.sortable:hover {
+            background: rgba(102, 126, 234, 0.2);
+        }
+
+        /* Modern Sort Icon */
+        .sort-icon {
+            transition: all 0.3s ease;
+            margin-left: 6px;
+            font-size: 0.75rem;
+        }
+
+        th.sortable:hover .sort-icon {
+            transform: scale(1.2);
+        }
+
+        /* Modern Dropdown */
+        .sort-dropdown {
+            position: absolute;
+            top: calc(100% + 8px);
+            left: 0;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+            min-width: 200px;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            z-index: 1000;
+            overflow: hidden;
+        }
+
+        .sort-dropdown.active {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        /* Modern Sort Options */
+        .sort-option {
+            padding: 14px 18px;
+            color: #4a5568;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            position: relative;
+        }
+
+        .sort-option::before {
+            content: '';
+            width: 4px;
+            height: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 2px;
+            position: absolute;
+            left: 0;
+            transition: height 0.2s ease;
+        }
+
+        .sort-option:hover {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+            color: #667eea;
+            padding-left: 24px;
+        }
+
+        .sort-option:hover::before {
+            height: 100%;
+        }
+
+        .sort-option:not(:last-child) {
+            border-bottom: 1px solid #f0f0f0;
+        }
+    </style>
+</head>
+
+<body>
+
+    <nav class="navbar compact-navbar">
+        <div class="container">
+            <h1 class="logo">🎓 University Rankings</h1>
+            <ul class="nav-links">
+                <li><a href="/">Home</a></li>
+                <li><a href="/search">Search</a></li>
+                <li><a href="/statistics">Statistics</a></li>
+                <li><a href="/add">Add University</a></li>
+                <li><a href="/about">About</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        <div class="flash-messages compact-box">
+            {% for category, message in messages %}
+            <div class="flash-message {{ category }}">{{ message }}</div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    {% endwith %}
+
+    <header class="hero compact-hero">
+        <div class="container">
+            <h1>World University Rankings 2024</h1>
+            <p>Explore the top universities around the world</p>
+
+            <div class="search-box compact-search-box">
+                <form action="/search" method="GET">
+                    <input type="text" name="q" placeholder="Search universities..." class="search-input compact-input">
+                    <button type="submit" class="search-btn compact-btn">Search</button>
+                </form>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <section class="rankings compact-box">
+            <h2>Top 100 Universities</h2>
+
+            <div class="table-responsive compact-table">
+                <table class="rankings-table compact-table-inner" id="uniTable">
+                    <thead>
+                        <tr>
+                            <th class="sortable" data-column="rank">
+                                Rank
+                                <span class="sort-icon">▼</span>
+                                <div class="sort-dropdown" id="rankSort">
+                                    <div class="sort-option" data-sort="rank-asc">1 → 100 (Low to High)</div>
+                                    <div class="sort-option" data-sort="rank-desc">100 → 1 (High to Low)</div>
+                                </div>
+                            </th>
+
+                            <th>University</th>
+                            <th>Country</th>
+
+                            <th class="sortable" data-column="score">
+                                Score
+                                <span class="sort-icon">▼</span>
+                                <div class="sort-dropdown" id="scoreSort">
+                                    <div class="sort-option" data-sort="score-asc">Low → High</div>
+                                    <div class="sort-option" data-sort="score-desc">High → Low</div>
+                                </div>
+                            </th>
+
+                            <th>Details</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {% for uni in universities %}
+                        <tr data-rank="{{ uni['Rank'] }}" data-score="{{ uni['score scaled'] }}">
+                            <td>{{ uni['Rank'] }}</td>
+                            <td class="uni-name">{{ uni['institution'] }}</td>
+                            <td>{{ uni['location'] }}</td>
+                            <td>{{ uni['score scaled'] }}</td>
+                            <td><a href="/university/{{ uni['Rank'] }}" class="view-btn compact-view-btn">View</a></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer compact-footer">
+        <div class="container">
+            <p>&copy; 2024 University Rankings Portal. Data from World University Rankings 2024.</p>
+        </div>
+    </footer>
+
+   <script>
+    // ===================================
+    // TABLE SORTING FUNCTIONALITY
+    // ===================================
+
+    const sortable = document.querySelectorAll(".sortable");
+    let currentDropdown = null;
+
+    sortable.forEach(header => {
+        const dropdown = header.querySelector(".sort-dropdown");
+
+        // OPEN dropdown on click
+        header.addEventListener("click", function(e) {
+            e.stopPropagation();
+
+            if (currentDropdown && currentDropdown !== dropdown) {
+                currentDropdown.classList.remove("active");
+            }
+
+            dropdown.classList.toggle("active");
+            currentDropdown = dropdown.classList.contains("active") ? dropdown : null;
+        });
+    });
+
+    // KEEP dropdown open when mouse is inside
+    document.querySelectorAll(".sort-dropdown").forEach(menu => {
+        menu.addEventListener("mouseenter", () => {
+            if (currentDropdown) {
+                currentDropdown.classList.add("active");
+            }
+        });
+    });
+
+    // CLOSE dropdown if clicked outside
+    document.addEventListener("click", function (e) {
+        if (!e.target.closest(".sortable")) {
+            if (currentDropdown) {
+                currentDropdown.classList.remove("active");
+                currentDropdown = null;
+            }
+        }
+    });
+
+    // ===================================
+    // ACTUAL SORTING LOGIC
+    // ===================================
+
+    document.querySelectorAll('.sort-option').forEach(option => {
+        option.addEventListener('click', function(e) {
+            e.stopPropagation();
+            
+            const sortType = this.getAttribute('data-sort');
+            const table = document.getElementById('uniTable');
+            const tbody = table.querySelector('tbody');
+            const rows = Array.from(tbody.querySelectorAll('tr'));
+            
+            // Sort the rows based on the sort type
+            rows.sort((a, b) => {
+                let valA, valB;
+                
+                if (sortType.startsWith('rank-')) {
+                    valA = parseInt(a.getAttribute('data-rank'));
+                    valB = parseInt(b.getAttribute('data-rank'));
+                } else if (sortType.startsWith('score-')) {
+                    valA = parseFloat(a.getAttribute('data-score'));
+                    valB = parseFloat(b.getAttribute('data-score'));
+                }
+                
+                // Ascending or Descending
+                if (sortType.endsWith('-asc')) {
+                    return valA - valB;
+                } else {
+                    return valB - valA;
+                }
+            });
+            
+            // Clear tbody and append sorted rows
+            tbody.innerHTML = '';
+            rows.forEach(row => tbody.appendChild(row));
+            
+            // Close dropdown after sorting
+            if (currentDropdown) {
+                currentDropdown.classList.remove("active");
+                currentDropdown = null;
+            }
+            
+            // Visual feedback
+            showToast('Table sorted successfully!', 'success');
+        });
+    });
+
+    // Toast notification function
+    function showToast(message, type = 'info') {
+        const toast = document.createElement('div');
+        toast.className = `toast toast-${type}`;
+        toast.textContent = message;
+
+        document.body.appendChild(toast);
+
+        setTimeout(() => {
+            toast.classList.add('fade-out');
+            setTimeout(() => toast.remove(), 500);
+        }, 2000);
+    }
+</script>
+
+
+</body>
+</html>

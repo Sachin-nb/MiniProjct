@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit University - University Rankings</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        /* Modal Styles */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(5px);
+            z-index: 9999;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 2.5rem;
+            border-radius: 20px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            animation: slideUp 0.4s ease;
+            position: relative;
+        }
+
+        .modal-content.error {
+            border: 3px solid #ef4444;
+            animation: shake 0.5s ease, slideUp 0.4s ease;
+        }
+
+        .modal-content.success {
+            border: 3px solid #10b981;
+        }
+
+        .modal-icon {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            font-size: 3rem;
+        }
+
+        .modal-icon.error {
+            background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+            color: #ef4444;
+            animation: pulse 2s ease infinite;
+        }
+
+        .modal-icon.success {
+            background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+            color: #10b981;
+        }
+
+        .modal-title {
+            font-size: 1.75rem;
+            font-weight: 800;
+            text-align: center;
+            margin-bottom: 1rem;
+            color: #1a1a1a;
+        }
+
+        .modal-message {
+            text-align: center;
+            font-size: 1.05rem;
+            color: #4a5568;
+            line-height: 1.6;
+            margin-bottom: 2rem;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+        }
+
+        .modal-btn {
+            padding: 0.875rem 2rem;
+            border: none;
+            border-radius: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+        }
+
+        .modal-btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .modal-btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+
+        .modal-btn-secondary {
+            background: #e2e8f0;
+            color: #1a1a1a;
+        }
+
+        .modal-btn-secondary:hover {
+            background: #cbd5e1;
+        }
+
+        /* Red Glow Animation for Invalid Score */
+        @keyframes redGlow {
+            0%, 100% {
+                box-shadow: 0 0 5px rgba(239, 68, 68, 0.5);
+                border-color: #ef4444;
+            }
+            50% {
+                box-shadow: 0 0 20px rgba(239, 68, 68, 0.8), 0 0 30px rgba(239, 68, 68, 0.6);
+                border-color: #dc2626;
+            }
+        }
+
+        .form-input.invalid {
+            animation: redGlow 1.5s ease-in-out infinite;
+            border-color: #ef4444 !important;
+            background: #fef2f2;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        /* Loading State */
+        .submit-btn.loading {
+            pointer-events: none;
+            opacity: 0.7;
+            position: relative;
+        }
+
+        .submit-btn.loading::after {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border: 3px solid white;
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        @keyframes spin {
+            to { transform: translateY(-50%) rotate(360deg); }
+        }
+
+        /* Score color backgrounds - only for input field */
+        .form-input.score-low {
+            background: #ffb3b3 !important;
+            color: #7a0000 !important;
+            font-weight: 700 !important;
+            border: 2px solid #ef4444 !important;
+        }
+
+        .form-input.score-mid {
+            background: #ffe7a1 !important;
+            color: #7a5d00 !important;
+            font-weight: 700 !important;
+            border: 2px solid #f59e0b !important;
+        }
+
+        .form-input.score-high {
+            background: #c7f7c1 !important;
+            color: #115e00 !important;
+            font-weight: 700 !important;
+            border: 2px solid #10b981 !important;
+        }
+
+        /* Score pulse animation */
+        .form-input.score-pulse {
+            animation: scorePulse 0.3s ease;
+        }
+
+        @keyframes scorePulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+    </style>
+</head>
+
+<body>
+
+<nav class="navbar">
+    <div class="container">
+        <h1 class="logo">🎓 University Rankings</h1>
+        <ul class="nav-links">
+            <li><a href="/">Home</a></li>
+            <li><a href="/search">Search</a></li>
+            <li><a href="/statistics">Statistics</a></li>
+            <li><a href="/add">Add University</a></li>
+            <li><a href="/about">About</a></li>
+        </ul>
+    </div>
+</nav>
+
+<!-- Modal Overlay -->
+<div class="modal-overlay" id="modalOverlay">
+    <div class="modal-content" id="modalContent">
+        <div class="modal-icon" id="modalIcon">❌</div>
+        <h2 class="modal-title" id="modalTitle">Error</h2>
+        <p class="modal-message" id="modalMessage">An error occurred</p>
+        <div class="modal-buttons">
+            <button class="modal-btn modal-btn-primary" onclick="closeModal()">OK</button>
+        </div>
+    </div>
+</div>
+
+<main class="container">
+    <section class="form-section" style="padding: 1.5rem; max-width: 900px; margin: 2rem auto;">
+        <h2 style="font-size: 1.5rem; margin-bottom: 1.5rem;">Edit University</h2>
+
+        <form id="editUniversityForm" class="university-form" style="padding: 1.5rem; gap: 1rem;">
+
+            <div class="form-grid" style="grid-template-columns: 1fr 1fr 1fr; gap: 1rem;">
+                <div class="form-group" style="margin: 0;">
+                    <label for="institution" style="font-size: 0.85rem; margin-bottom: 0.25rem;">Institution Name*</label>
+                    <input type="text" id="institution" name="institution" value="{{ university['institution'] }}" required class="form-input" style="padding: 0.5rem 0.75rem; font-size: 0.9rem;">
+                </div>
+
+                <div class="form-group" style="margin: 0;">
+                    <label for="location" style="font-size: 0.85rem; margin-bottom: 0.25rem;">Location (Country)*</label>
+                    <input type="text" id="location" name="location" value="{{ university['location'] }}" required class="form-input" style="padding: 0.5rem 0.75rem; font-size: 0.9rem;">
+                </div>
+
+                <div class="form-group" style="margin: 0;">
+                    <label for="location_code" style="font-size: 0.85rem; margin-bottom: 0.25rem;">Location Code*</label>
+                    <input type="text" id="location_code" name="location_code" value="{{ university['location code'] }}" required class="form-input" style="padding: 0.5rem 0.75rem; font-size: 0.9rem;">
+                </div>
+            </div>
+
+            <div class="form-grid" style="grid-template-columns: repeat(3, 1fr); gap: 1rem;">
+                <div class="form-group" style="margin: 0;">
+                    <label for="ar_score" style="font-size: 0.85rem; margin-bottom: 0.25rem;">Academic Reputation*</label>
+                    <input type="number" id="ar_score" name="ar_score" value="{{ university['ar score'] }}" class="form-input" min="0" max="100" step="0.1" style="padding: 0.5rem 0.75rem; font-size: 0.9rem;">
+                </div>
+
+                <div class="form-group" style="margin: 0;">
+                    <label for="er_score" style="font-size: 0.85rem; margin-bottom: 0.25rem;">Employer Reputation*</label>
+                    <input type="number" id="er_score" name="er_score" value="{{ university['er score'] }}" class="form-input" min="0" max="100" step="0.1" style="padding: 0.5rem 0.75rem; font-size: 0.9rem;">
+                </div>
+
+                <div class="form-group" style="margin: 0;">
+                    <label for="fsr_score" style="font-size: 0.85rem; margin-bottom: 0.25rem;">Faculty/Student Ratio*</label>
+                    <input type="number" id="fsr_score" name="fsr_score" value="{{ university['fsr score'] }}" class="form-input" min="0" max="100" step="0.1" style="padding: 0.5rem 0.75rem; font-size: 0.9rem;">
+                </div>
+
+                <div class="form-group" style="margin: 0;">
+                    <label for="cpf_score" style="font-size: 0.85rem; margin-bottom: 0.25rem;">Citations per Faculty*</label>
+                    <input type="number" id="cpf_score" name="cpf_score" value="{{ university['cpf score'] }}" class="form-input" min="0" max="100" step="0.1" style="padding: 0.5rem 0.75rem; font-size: 0.9rem;">
+                </div>
+
+                <div class="form-group" style="margin: 0;">
+                    <label for="ifr_score" style="font-size: 0.85rem; margin-bottom: 0.25rem;">Int'l Faculty Ratio*</label>
+                    <input type="number" id="ifr_score" name="ifr_score" value="{{ university['ifr score'] }}" class="form-input" min="0" max="100" step="0.1" style="padding: 0.5rem 0.75rem; font-size: 0.9rem;">
+                </div>
+
+                <div class="form-group" style="margin: 0;">
+                    <label for="isr_score" style="font-size: 0.85rem; margin-bottom: 0.25rem;">Int'l Student Ratio*</label>
+                    <input type="number" id="isr_score" name="isr_score" value="{{ university['isr score'] }}" class="form-input" min="0" max="100" step="0.1" style="padding: 0.5rem 0.75rem; font-size: 0.9rem;">
+                </div>
+            </div>
+
+            <div class="form-group" style="margin: 0; max-width: 300px; margin-left: auto; margin-right: auto;">
+                <label for="overall_score" style="font-size: 0.85rem; margin-bottom: 0.25rem;">Overall Score* <span style="color: #ef4444; font-weight: 700; font-size: 0.75rem;">(Min: 50)</span></label>
+                <input type="number" id="overall_score" name="overall_score" value="{{ university['score scaled'] }}" class="form-input" style="font-size: 1.5rem; font-weight: 700; text-align: center; padding: 0.75rem;">
+            </div>
+
+            <div class="form-actions" style="gap: 0.75rem; margin-top: 0.5rem; justify-content: center;">
+                <button type="submit" class="submit-btn" id="submitBtn" style="padding: 0.75rem 2rem; font-size: 0.95rem;">Save Changes</button>
+                <a href="/university/{{ university['Rank'] }}" class="cancel-btn" style="padding: 0.75rem 2rem; font-size: 0.95rem;">Cancel</a>
+            </div>
+        </form>
+
+    </section>
+</main>
+
+<footer class="footer">
+    <div class="container">
+        <p>&copy; 2024 University Rankings Portal. Data from World University Rankings 2024.</p>
+    </div>
+</footer>
+
+<script>
+    const form = document.getElementById('editUniversityForm');
+    const submitBtn = document.getElementById('submitBtn');
+    const overallScoreInput = document.getElementById('overall_score');
+    const modalOverlay = document.getElementById('modalOverlay');
+    const modalContent = document.getElementById('modalContent');
+    const modalIcon = document.getElementById('modalIcon');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalMessage = document.getElementById('modalMessage');
+    const universityRank = {{ university['Rank']|int }};
+
+    // Form submission
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        // Frontend validation
+        const overallScore = parseFloat(overallScoreInput.value);
+        if (overallScore < 50) {
+            showModal(
+                'error',
+                '❌',
+                'Invalid Score',
+                'Cannot update university with overall score below 50. The minimum acceptable score is 50 to ensure quality standards.'
+            );
+            overallScoreInput.classList.add('invalid');
+            overallScoreInput.focus();
+            return;
+        }
+
+        // Show loading state
+        submitBtn.classList.add('loading');
+        submitBtn.textContent = 'Saving...';
+
+        try {
+            const formData = new FormData(form);
+            
+            const response = await fetch(`/edit/${universityRank}`, {
+                method: 'POST',
+                body: formData
+            });
+
+            if (response.ok) {
+                showModal(
+                    'success',
+                    '✓',
+                    'Success!',
+                    'University details have been successfully updated.',
+                    () => window.location.href = `/university/${universityRank}`
+                );
+            } else {
+                const data = await response.json();
+                showModal('error', '❌', 'Error', data.message || 'Failed to update university. Please try again.');
+            }
+        } catch (error) {
+            showModal('error', '❌', 'Error', 'An unexpected error occurred. Please try again.');
+        } finally {
+            submitBtn.classList.remove('loading');
+            submitBtn.textContent = 'Save Changes';
+        }
+    });
+
+    function showModal(type, icon, title, message, callback = null) {
+        modalIcon.textContent = icon;
+        modalIcon.className = `modal-icon ${type}`;
+        modalContent.className = `modal-content ${type}`;
+        modalTitle.textContent = title;
+        modalMessage.textContent = message;
+        modalOverlay.classList.add('active');
+
+        // Store callback for later use
+        if (callback) {
+            window.modalCallback = callback;
+        }
+    }
+
+    function closeModal() {
+        modalOverlay.classList.remove('active');
+        
+        // Execute callback if exists
+        if (window.modalCallback) {
+            window.modalCallback();
+            window.modalCallback = null;
+        }
+    }
+
+    // Close modal on overlay click
+    modalOverlay.addEventListener('click', function(e) {
+        if (e.target === modalOverlay) {
+            closeModal();
+        }
+    });
+
+    // Close modal on Escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && modalOverlay.classList.contains('active')) {
+            closeModal();
+        }
+    });
+
+    // Remove invalid class when user starts typing
+    overallScoreInput.addEventListener('input', function() {
+        this.classList.remove('invalid');
+    });
+</script>
+
+</body>
+</html>

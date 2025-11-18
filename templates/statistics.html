@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Statistics - University Rankings</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    /* Compact Statistics Styling */
+    .simple-stats-section {
+      padding: 1.5rem;
+      max-width: 1100px;
+      margin: 2rem auto;
+      background: white;
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow-lg);
+    }
+
+    .section-title {
+      font-size: 1.5rem;
+      margin-bottom: 1rem;
+      background: var(--gradient-primary);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      text-align: center;
+    }
+
+    .simple-stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1rem;
+      margin-bottom: 0;
+    }
+
+    .simple-stat-card {
+      background: linear-gradient(135deg, rgba(102, 126, 234, 0.08) 0%, rgba(118, 75, 162, 0.08) 100%);
+      border-radius: var(--radius-lg);
+      padding: 1rem;
+      text-align: center;
+      border: 2px solid rgba(102, 126, 234, 0.15);
+    }
+
+    .stat-label {
+      font-size: 0.85rem;
+      color: var(--text-medium);
+      margin-bottom: 0.5rem;
+      font-weight: 500;
+    }
+
+    .stat-value {
+      font-size: 1.75rem;
+      font-weight: 700;
+      background: var(--gradient-primary);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin: 0;
+    }
+
+    /* Compact Graph Grid */
+    .graph-grid {
+      max-width: 1100px;
+      margin: 1.5rem auto;
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1.5rem;
+      padding: 0 1.5rem;
+    }
+
+    .graph-section {
+      background: white;
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow-lg);
+      padding: 1.25rem;
+    }
+
+    .graph-section h2 {
+      font-size: 1rem;
+      margin-bottom: 1rem;
+      background: var(--gradient-primary);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      font-weight: 700;
+    }
+
+    .graph-container {
+      height: 280px;
+      position: relative;
+    }
+
+    /* Responsive */
+    @media (max-width: 968px) {
+      .simple-stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .graph-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .simple-stats-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navigation -->
+  <nav class="navbar">
+    <div class="container">
+      <h1 class="logo">🎓 University Rankings</h1>
+      <ul class="nav-links">
+        <li><a href="/">Home</a></li>
+        <li><a href="/search">Search</a></li>
+        <li><a href="/statistics">Statistics</a></li>
+        <li><a href="/add">Add University</a></li>
+        <li><a href="/about">About</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <main class="container">
+
+    <!-- COMPACT STAT CARDS -->
+    <section class="simple-stats-section">
+      <h2 class="section-title">Ranking Statistics</h2>
+      <div class="simple-stats-grid">
+        <div class="simple-stat-card">
+          <p class="stat-label">Total Universities</p>
+          <h3 class="stat-value">{{ stats['total_universities'] }}</h3>
+        </div>
+        <div class="simple-stat-card">
+          <p class="stat-label">Countries Represented</p>
+          <h3 class="stat-value">{{ stats['total_countries'] }}</h3>
+        </div>
+        <div class="simple-stat-card">
+          <p class="stat-label">Top Country</p>
+          <h3 class="stat-value">{{ stats['top_country'] }}</h3>
+        </div>
+        <div class="simple-stat-card">
+          <p class="stat-label">Universities in Top Country</p>
+          <h3 class="stat-value">{{ stats['top_country_count'] }}</h3>
+        </div>
+      </div>
+    </section>
+
+    <!-- COMPACT GRAPH GRID -->
+    <div class="graph-grid">
+
+      <!-- Top 10 Universities -->
+      <section class="graph-section">
+        <h2>📊 Top 10 Universities by Overall Score</h2>
+        <div class="graph-container">
+          <canvas id="overallScoreChart"></canvas>
+        </div>
+      </section>
+
+      <!-- Top Countries -->
+      <section class="graph-section">
+        <h2>🌍 Top Countries by Number of Universities</h2>
+        <div class="graph-container">
+          <canvas id="countryChart"></canvas>
+        </div>
+      </section>
+
+      <!-- Radar Chart -->
+      <section class="graph-section">
+        <h2>📈 Top 5 Universities - Key Metric Comparison</h2>
+        <div class="graph-container">
+          <canvas id="radarChart"></canvas>
+        </div>
+      </section>
+
+      <!-- Scatter Chart 1 -->
+      <section class="graph-section">
+        <h2>📉 Academic vs Employer Reputation</h2>
+        <div class="graph-container">
+          <canvas id="scatterChart"></canvas>
+        </div>
+      </section>
+
+      <!-- Scatter Chart 2 -->
+      <section class="graph-section">
+        <h2>🔍 FSR vs CPF Correlation</h2>
+        <div class="graph-container">
+          <canvas id="scatterChart2"></canvas>
+        </div>
+      </section>
+
+      <!-- Bubble Chart -->
+      <section class="graph-section">
+        <h2>🌐 Internationalization Metrics</h2>
+        <div class="graph-container">
+          <canvas id="bubbleChart"></canvas>
+        </div>
+      </section>
+
+      <!-- Line Chart -->
+      <section class="graph-section">
+        <h2>📊 Average Scores Across Metrics</h2>
+        <div class="graph-container">
+          <canvas id="lineChart"></canvas>
+        </div>
+      </section>
+
+    </div>
+
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <p>&copy; 2024 University Rankings Portal. Data from QS World University Rankings 2024.</p>
+    </div>
+  </footer>
+
+  <script>
+    // Color palette matching the gradient theme
+    const colors = {
+      primary: '#667eea',
+      secondary: '#764ba2',
+      accent: '#f093fb',
+      gradient: ['#667eea', '#764ba2', '#f093fb', '#f5576c', '#11998e', '#38ef7d', '#F59E0B', '#EF4444']
+    };
+
+    // 1. Top 10 Universities Bar Chart
+    const ctxBar = document.getElementById('overallScoreChart').getContext('2d');
+    const gradient1 = ctxBar.createLinearGradient(0, 0, 0, 250);
+    gradient1.addColorStop(0, colors.primary);
+    gradient1.addColorStop(1, colors.secondary);
+
+    new Chart(ctxBar, {
+      type: 'bar',
+      data: {
+        labels: ['MIT', 'Cambridge', 'Stanford', 'Oxford', 'Harvard', 'Caltech', 'Imperial', 'UCL', 'ETH Zurich', 'Chicago'],
+        datasets: [{
+          label: 'Overall Score',
+          data: [100, 98.8, 98.5, 98.4, 97.6, 97, 97, 95, 93.6, 93.2],
+          backgroundColor: gradient1,
+          borderRadius: 6,
+          borderSkipped: false
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+            padding: 10,
+            titleFont: { size: 12, weight: 'bold' },
+            bodyFont: { size: 11 }
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            max: 100,
+            grid: { color: 'rgba(0, 0, 0, 0.05)' },
+            ticks: { font: { size: 10 } }
+          },
+          x: {
+            grid: { display: false },
+            ticks: { font: { size: 9 } }
+          }
+        }
+      }
+    });
+
+    // 2. Top Countries Pie Chart
+    new Chart(document.getElementById('countryChart'), {
+      type: 'pie',
+      data: {
+        labels: ['US', 'UK', 'China', 'Japan', 'S. Korea', 'Germany', 'Australia', 'France'],
+        datasets: [{
+          data: [201, 90, 71, 48, 40, 46, 38, 35],
+          backgroundColor: colors.gradient,
+          borderWidth: 2,
+          borderColor: '#fff'
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'right',
+            labels: { font: { size: 10 }, padding: 8 }
+          },
+          tooltip: {
+            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+            padding: 10
+          }
+        }
+      }
+    });
+
+    // 3. Radar Chart - Top 5 Universities
+    new Chart(document.getElementById('radarChart'), {
+      type: 'radar',
+      data: {
+        labels: ['Academic', 'Employer', 'Faculty', 'Citations', 'Int\'l Faculty'],
+        datasets: [
+          {
+            label: 'MIT',
+            data: [100, 100, 100, 100, 100],
+            borderColor: colors.primary,
+            backgroundColor: colors.primary + '30',
+            pointBackgroundColor: colors.primary,
+            pointBorderColor: '#fff',
+            pointBorderWidth: 2
+          },
+          {
+            label: 'Cambridge',
+            data: [100, 100, 100, 92.3, 100],
+            borderColor: colors.secondary,
+            backgroundColor: colors.secondary + '30',
+            pointBackgroundColor: colors.secondary,
+            pointBorderColor: '#fff',
+            pointBorderWidth: 2
+          },
+          {
+            label: 'Stanford',
+            data: [100, 100, 100, 99.9, 99.8],
+            borderColor: colors.accent,
+            backgroundColor: colors.accent + '30',
+            pointBackgroundColor: colors.accent,
+            pointBorderColor: '#fff',
+            pointBorderWidth: 2
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: { font: { size: 9 }, padding: 8 }
+          }
+        },
+        scales: {
+          r: {
+            beginAtZero: true,
+            max: 100,
+            ticks: { font: { size: 9 }, backdropColor: 'transparent' },
+            pointLabels: { font: { size: 9 } },
+            grid: { color: 'rgba(0, 0, 0, 0.1)' }
+          }
+        }
+      }
+    });
+
+    // 4. Scatter Chart - Academic vs Employer
+    const scatterData1 = Array.from({ length: 40 }, () => ({
+      x: Math.random() * 100,
+      y: Math.random() * 100
+    }));
+
+    new Chart(document.getElementById('scatterChart'), {
+      type: 'scatter',
+      data: {
+        datasets: [{
+          label: 'Universities',
+          data: scatterData1,
+          backgroundColor: colors.primary + '70',
+          borderColor: colors.primary,
+          borderWidth: 1,
+          pointRadius: 4
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+            padding: 10
+          }
+        },
+        scales: {
+          x: {
+            title: { display: true, text: 'Academic Reputation', font: { size: 10, weight: 'bold' } },
+            grid: { color: 'rgba(0, 0, 0, 0.05)' },
+            ticks: { font: { size: 9 } }
+          },
+          y: {
+            title: { display: true, text: 'Employer Reputation', font: { size: 10, weight: 'bold' } },
+            grid: { color: 'rgba(0, 0, 0, 0.05)' },
+            ticks: { font: { size: 9 } }
+          }
+        }
+      }
+    });
+
+    // 5. Scatter Chart - FSR vs CPF
+    const scatterData2 = Array.from({ length: 40 }, () => ({
+      x: Math.random() * 100,
+      y: Math.random() * 100
+    }));
+
+    new Chart(document.getElementById('scatterChart2'), {
+      type: 'scatter',
+      data: {
+        datasets: [{
+          label: 'Universities',
+          data: scatterData2,
+          backgroundColor: colors.accent + '70',
+          borderColor: colors.accent,
+          borderWidth: 1,
+          pointRadius: 4
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+            padding: 10
+          }
+        },
+        scales: {
+          x: {
+            title: { display: true, text: 'Faculty Student Ratio', font: { size: 10, weight: 'bold' } },
+            grid: { color: 'rgba(0, 0, 0, 0.05)' },
+            ticks: { font: { size: 9 } }
+          },
+          y: {
+            title: { display: true, text: 'Citations per Faculty', font: { size: 10, weight: 'bold' } },
+            grid: { color: 'rgba(0, 0, 0, 0.05)' },
+            ticks: { font: { size: 9 } }
+          }
+        }
+      }
+    });
+
+    // 6. Bubble Chart - Internationalization
+    const bubbleData = [
+      { x: 85, y: 90, r: 12 },
+      { x: 88, y: 92, r: 15 },
+      { x: 82, y: 88, r: 13 },
+      { x: 90, y: 85, r: 14 },
+      { x: 78, y: 87, r: 11 },
+      { x: 92, y: 89, r: 16 },
+      { x: 75, y: 83, r: 10 }
+    ];
+
+    new Chart(document.getElementById('bubbleChart'), {
+      type: 'bubble',
+      data: {
+        datasets: [{
+          label: 'Internationalization Score',
+          data: bubbleData,
+          backgroundColor: colors.gradient.map(c => c + '50'),
+          borderColor: colors.gradient,
+          borderWidth: 2
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+            padding: 10,
+            callbacks: {
+              label: (context) => {
+                return `Int'l Faculty: ${context.parsed.x}, Int'l Students: ${context.parsed.y}`;
+              }
+            }
+          }
+        },
+        scales: {
+          x: {
+            title: { display: true, text: 'International Faculty Score', font: { size: 10, weight: 'bold' } },
+            grid: { color: 'rgba(0, 0, 0, 0.05)' },
+            ticks: { font: { size: 9 } }
+          },
+          y: {
+            title: { display: true, text: 'International Students Score', font: { size: 10, weight: 'bold' } },
+            grid: { color: 'rgba(0, 0, 0, 0.05)' },
+            ticks: { font: { size: 9 } }
+          }
+        }
+      }
+    });
+
+    // 7. Line Chart - Average Scores
+    new Chart(document.getElementById('lineChart'), {
+      type: 'line',
+      data: {
+        labels: ['Academic', 'Employer', 'Faculty', 'Citations', 'Int Faculty', 'Int Students', 'Network'],
+        datasets: [{
+          label: 'Average Score',
+          data: [45.2, 38.7, 42.1, 35.8, 41.3, 39.6, 44.7],
+          borderColor: colors.primary,
+          backgroundColor: colors.primary + '20',
+          borderWidth: 2,
+          fill: true,
+          tension: 0.4,
+          pointBackgroundColor: colors.primary,
+          pointBorderColor: '#fff',
+          pointBorderWidth: 2,
+          pointRadius: 5,
+          pointHoverRadius: 7
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+            padding: 10
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            max: 50,
+            grid: { color: 'rgba(0, 0, 0, 0.05)' },
+            ticks: { font: { size: 10 } }
+          },
+          x: {
+            grid: { display: false },
+            ticks: { font: { size: 9 } }
+          }
+        }
+      }
+    });
+  </script>
+
+</body>
+</html>

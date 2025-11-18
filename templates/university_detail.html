@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ university['institution'] }} - University Rankings</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        /* Compact University Detail Page Styling */
+        .detail-section {
+            padding: 1.25rem;
+            max-width: 1000px;
+            margin: 1.5rem auto;
+        }
+
+        /* Compact Top Info Row */
+        .detail-top-row {
+            background: white;
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-lg);
+            padding: 1.5rem;
+            display: grid;
+            grid-template-columns: auto 1fr auto auto auto auto;
+            gap: 1.5rem;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        /* Wavy Header Style for Main Info */
+        .main-info-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 30px;
+            box-shadow: var(--shadow-lg);
+            padding: 0;
+            margin-bottom: 1rem;
+            position: relative;
+            overflow: visible;
+        }
+
+        .main-info-header::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 30px;
+            z-index: -1;
+            opacity: 0.3;
+            filter: blur(10px);
+        }
+
+        /* Header Container for Header + Action Button */
+        .header-with-actions {
+            display: flex;
+            gap: 1rem;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+        }
+
+        .header-with-actions .main-info-header {
+            flex: 1;
+            margin-bottom: 0;
+        }
+
+        /* Header Labels Row */
+        .header-labels-row {
+            display: grid;
+            grid-template-columns: 100px 1fr 180px 100px 120px 150px;
+            gap: 1rem;
+            align-items: center;
+            padding: 0.75rem 1.5rem;
+            background: rgba(102, 126, 234, 0.3);
+        }
+
+        .header-labels-row .label-item {
+            text-align: left;
+        }
+
+        .header-labels-row .label-item label {
+            font-size: 0.75rem;
+            color: rgba(0, 0, 0, 0.9);
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: block;
+        }
+
+        .header-labels-row .label-item.center {
+            text-align: center;
+        }
+
+        /* University Values Display */
+        .university-name-display {
+            display: grid;
+            grid-template-columns: 100px 1fr 180px 100px 120px 150px;
+            gap: 1rem;
+            align-items: center;
+            padding: 1rem 1.5rem;
+            background: white;
+        }
+
+        .university-name-display .value-item {
+            text-align: left;
+        }
+
+        .university-name-display .value-item.center {
+            text-align: center;
+        }
+
+        .university-name-display .value-item.rank .value {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #2d3748;
+        }
+
+        .university-name-display .value-item.uni-name .value {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #2d3748;
+            line-height: 1.4;
+        }
+
+        .university-name-display .value-item.country .value {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #2d3748;
+        }
+
+        .university-name-display .value-item .value.score {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #2d3748;
+        }
+
+        .university-name-display .value-item .value.code {
+            font-size: 0.9rem;
+            padding: 0.35rem 0.85rem;
+            background: rgba(102, 126, 234, 0.15);
+            border-radius: 15px;
+            font-weight: 600;
+            color: #2d3748;
+            display: inline-block;
+        }
+
+        /* Actions Section - Below Header */
+        .actions-section {
+            display: block;
+            background: transparent;
+            padding: 0;
+            margin: 0;
+            box-shadow: none;
+        }
+
+        /* Actions Section - Separate White Card */
+        .actions-section {
+            display: none;
+        }
+
+        /* Actions Dropdown */
+        .actions-wrapper {
+            position: relative;
+            align-self: stretch;
+            display: flex;
+            align-items: flex-start;
+        }
+
+        .actions-btn {
+            padding: 0.75rem 1.5rem;
+            font-size: 0.9rem;
+            background: white;
+            color: #667eea;
+            border: 2px solid #667eea;
+            border-radius: 30px;
+            cursor: pointer;
+            font-weight: 700;
+            transition: var(--transition);
+            box-shadow: var(--shadow-md);
+            white-space: nowrap;
+            height: fit-content;
+        }
+
+        .actions-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+            background: #667eea;
+            color: white;
+        }
+
+        .actions-menu {
+            position: absolute;
+            top: calc(100% + 0.5rem);
+            right: 0;
+            background: white;
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-lg);
+            min-width: 200px;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: var(--transition);
+            z-index: 10;
+            overflow: hidden;
+        }
+
+        .actions-menu.active {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .actions-menu .action-item {
+            display: block;
+            padding: 0.85rem 1.25rem;
+            color: var(--text-dark);
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: var(--transition);
+            border: none;
+            background: none;
+            width: 100%;
+            text-align: left;
+            cursor: pointer;
+            font-family: inherit;
+            font-weight: 500;
+        }
+
+        .actions-menu .action-item:hover {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+        }
+
+        .actions-menu .action-item.delete {
+            color: #EF4444;
+            border-top: 1px solid #f0f0f0;
+        }
+
+        .actions-menu .action-item.delete:hover {
+            background: rgba(239, 68, 68, 0.1);
+        }
+
+        .actions-menu form {
+            margin: 0;
+        }
+
+        /* Detailed Scores Section */
+        .detailed-scores {
+            background: white;
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-lg);
+            padding: 1.25rem;
+            margin-bottom: 1rem;
+        }
+
+        .detailed-scores h3 {
+            font-size: 1rem;
+            margin-bottom: 0.85rem;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-weight: 700;
+        }
+
+        .detailed-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.6rem 0.85rem;
+            margin-bottom: 0.4rem;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
+            border-radius: var(--radius-md);
+            font-size: 0.85rem;
+            transition: var(--transition);
+        }
+
+        .detailed-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .detailed-row:hover {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+            transform: translateX(5px);
+        }
+
+        .detailed-row span:first-child {
+            color: var(--text-dark);
+            font-weight: 500;
+        }
+
+        .detailed-row span:last-child {
+            font-weight: 700;
+            color: var(--primary);
+            font-size: 0.95rem;
+        }
+
+        /* Back Button */
+        .back-button-container {
+            text-align: center;
+            margin-top: 0;
+        }
+
+        .back-button-container .view-btn {
+            padding: 0.6rem 1.75rem;
+            font-size: 0.85rem;
+            background: var(--gradient-primary);
+            color: white;
+            text-decoration: none;
+            border-radius: var(--radius-md);
+            display: inline-block;
+            transition: var(--transition);
+            box-shadow: var(--shadow-sm);
+            font-weight: 600;
+        }
+
+        .back-button-container .view-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        /* Responsive */
+        @media (max-width: 968px) {
+            .header-with-actions {
+                flex-direction: column;
+            }
+
+            .header-labels-row,
+            .university-name-display {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+                text-align: left;
+            }
+
+            .header-labels-row .label-item,
+            .university-name-display .value-item {
+                text-align: left;
+            }
+
+            .actions-wrapper {
+                width: 100%;
+            }
+
+            .actions-btn {
+                width: 100%;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .detailed-row {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.25rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<nav class="navbar">
+    <div class="container">
+        <h1 class="logo">🎓 University Rankings</h1>
+        <ul class="nav-links">
+            <li><a href="/">Home</a></li>
+            <li><a href="/search">Search</a></li>
+            <li><a href="/statistics">Statistics</a></li>
+            <li><a href="/add">Add University</a></li>
+            <li><a href="/about">About</a></li>
+        </ul>
+    </div>
+</nav>
+
+<main class="container">
+    <section class="detail-section">
+
+        <!-- HEADER WITH ACTIONS CONTAINER -->
+        <div class="header-with-actions">
+            
+            <!-- WAVY HEADER WITH LABELS FIRST -->
+            <div class="main-info-header">
+
+                <!-- Header Labels Row -->
+                <div class="header-labels-row">
+                    <div class="label-item">
+                        <label>RANK</label>
+                    </div>
+
+                    <div class="label-item">
+                        <label>UNIVERSITY</label>
+                    </div>
+
+                    <div class="label-item">
+                        <label>COUNTRY</label>
+                    </div>
+
+                    <div class="label-item center">
+                        <label>SCORE</label>
+                    </div>
+
+                    <div class="label-item center">
+                        <label>COUNTRY CODE</label>
+                    </div>
+
+                    <div class="label-item center">
+                        <label></label>
+                    </div>
+                </div>
+
+                <!-- University Name and Values Display -->
+                <div class="university-name-display">
+                    <div class="value-item rank">
+                        <div class="value">{{ university["Rank"] }}</div>
+                    </div>
+
+                    <div class="value-item uni-name">
+                        <div class="value">{{ university["institution"] }}</div>
+                    </div>
+
+                    <div class="value-item country">
+                        <div class="value">{{ university["location"] }}</div>
+                    </div>
+
+                    <div class="value-item center">
+                        <div class="value score">{{ university["score scaled"] }}</div>
+                    </div>
+
+                    <div class="value-item center">
+                        <div class="value code">{{ university["location code"] }}</div>
+                    </div>
+
+                    <div class="value-item center">
+                        <div class="actions-wrapper">
+                            <button class="actions-btn">Actions ▾</button>
+
+                            <div class="actions-menu">
+                                <a href="{{ url_for('edit_university', rank=university['Rank']|int) }}" class="action-item">
+                                    ✏️ Edit University
+                                </a>
+
+                                <form action="{{ url_for('delete_university', rank=university['Rank']|int) }}" method="POST">
+                                    <button type="submit" class="action-item delete">
+                                        🗑️ Delete University
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- DETAILED SCORES -->
+        <div class="detailed-scores">
+            <h3>Detailed Scores</h3>
+
+            <div class="detailed-row">
+                <span>Academic Reputation</span><span>{{ university['ar score'] }}</span>
+            </div>
+
+            <div class="detailed-row">
+                <span>Employer Reputation</span><span>{{ university['er score'] }}</span>
+            </div>
+
+            <div class="detailed-row">
+                <span>Faculty Student Ratio</span><span>{{ university['fsr score'] }}</span>
+            </div>
+
+            <div class="detailed-row">
+                <span>Citations per Faculty</span><span>{{ university['cpf score'] }}</span>
+            </div>
+
+            <div class="detailed-row">
+                <span>International Faculty Ratio</span><span>{{ university['ifr score'] }}</span>
+            </div>
+
+            <div class="detailed-row">
+                <span>International Student Ratio</span><span>{{ university['isr score'] }}</span>
+            </div>
+
+        </div>
+
+        <!-- BACK BUTTON -->
+        <div class="back-button-container">
+            <a href="/" class="view-btn">← Back to Home</a>
+        </div>
+
+    </section>
+</main>
+
+<footer class="footer">
+    <div class="container">
+        <p>&copy; 2024 University Rankings Portal. Data from World University Rankings 2024.</p>
+    </div>
+</footer>
+
+<script>
+    document.querySelector(".actions-btn").addEventListener("click", () => {
+        document.querySelector(".actions-menu").classList.toggle("active");
+    });
+
+    document.addEventListener("click", (e) => {
+        if (!e.target.closest(".actions-wrapper")) {
+            document.querySelector(".actions-menu").classList.remove("active");
+        }
+    });
+</script>
+
+</body>
+</html>

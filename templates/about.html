@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About Us - University Rankings</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        /* Compact About Page Styling */
+        .about-section {
+            padding: 1.5rem;
+            max-width: 1100px;
+            margin: 2rem auto;
+            background: white;
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .about-section h2 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .about-section > p {
+            margin-bottom: 1.5rem;
+            font-size: 0.95rem;
+            color: #444;
+            line-height: 1.6;
+        }
+
+        .info-cards-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .info-card {
+            padding: 1.25rem;
+            margin: 0;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.08) 0%, rgba(118, 75, 162, 0.08) 100%);
+            border-radius: var(--radius-lg);
+            border: 2px solid rgba(102, 126, 234, 0.15);
+        }
+
+        .info-card h3 {
+            font-size: 1.1rem;
+            margin-bottom: 0.75rem;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-weight: 700;
+        }
+
+        .info-card p {
+            font-size: 0.9rem;
+            line-height: 1.6;
+            color: var(--text-dark);
+        }
+
+        .info-card ul {
+            text-align: left;
+            margin: 0 1rem;
+            font-size: 0.9rem;
+            color: var(--text-dark);
+        }
+
+        .info-card ul li {
+            margin-bottom: 0.5rem;
+        }
+
+        /* Compact Team Cards - All in One Row */
+        .contact-section {
+            background: white;
+            padding: 1.5rem;
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-lg);
+            margin-bottom: 1.5rem;
+        }
+
+        .contact-section h3 {
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+            text-align: center;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .team-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+        }
+
+        .team-card {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.08) 0%, rgba(118, 75, 162, 0.08) 100%);
+            border-radius: var(--radius-md);
+            padding: 1rem;
+            text-align: center;
+            box-shadow: var(--shadow-sm);
+            transition: var(--transition);
+            border: 2px solid transparent;
+        }
+
+        .team-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-md);
+            border-color: var(--primary);
+        }
+
+        .team-card img {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-bottom: 0.75rem;
+            border: 3px solid var(--primary);
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+        }
+
+        .team-card h4 {
+            font-size: 0.95rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: var(--text-dark);
+        }
+
+        .team-card p {
+            font-size: 0.75rem;
+            color: var(--text-medium);
+            line-height: 1.6;
+        }
+
+        .back-button-container {
+            text-align: center;
+            margin-top: 1.5rem;
+        }
+
+        .back-button-container .view-btn {
+            padding: 0.75rem 2rem;
+            font-size: 0.9rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 968px) {
+            .team-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .info-cards-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .team-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <h1 class="logo">🎓 University Rankings</h1>
+            <ul class="nav-links">
+                <li><a href="/">Home</a></li>
+                <li><a href="/search">Search</a></li>
+                <li><a href="/statistics">Statistics</a></li>
+                <li><a href="/add">Add University</a></li>
+                <li><a href="/about">About</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main class="container">
+        <section class="about-section">
+            <h2>About University Rankings Portal</h2>
+            <p>
+                This portal presents the QS World University Rankings data for 2024 in an interactive
+                and easy-to-explore format. You can browse the top universities, search by name or country,
+                and view detailed metric breakdowns for each institution.
+            </p>
+
+            <div class="info-cards-grid">
+                <div class="info-card">
+                    <h3>Our Mission</h3>
+                    <p>To make university ranking data accessible and useful for students, researchers, and institutions.</p>
+                </div>
+
+                <div class="info-card">
+                    <h3>What We Provide</h3>
+                    <ul>
+                        <li>Browse top universities</li>
+                        <li>Search and filter by name and country</li>
+                        <li>View detailed scores and metrics</li>
+                        <li>Add, edit, and remove entries</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="contact-section">
+                <h3>Contact Us</h3>
+                <div class="team-grid">
+                    <div class="team-card">
+                        <img src="{{ url_for('static', filename='images/Sandeep.png') }}" alt="Sandeep Rathod">
+                        <h4>Sandeep Rathod</h4>
+                        <p>
+                            📞 +91 9902448306<br>
+                            📧 sandeeprathod@zohomail.in
+                        </p>
+                    </div>
+
+                    <div class="team-card">
+                        <img src="{{ url_for('static', filename='images/Shashank.png') }}" alt="Shashank">
+                        <h4>Shashank Urs H P</h4>
+                        <p>
+                            📞 +91 7892403016<br>
+                            📧 shashankhp@kssem.edu.in
+                        </p>
+                    </div>
+
+                    <div class="team-card">
+                        <img src="{{ url_for('static', filename='images/Vinod.png') }}" alt="Vinod">
+                        <h4>Vinod</h4>
+                        <p>
+                            📞 +91 6364720071<br>
+                            📧 vinodcse@kssem.edu.in
+                        </p>
+                    </div>
+
+                    <div class="team-card">
+                        <img src="{{ url_for('static', filename='images/Shashidhar.jpg') }}" alt="Shashidhar">
+                        <h4>Shashidhar SC</h4>
+                        <p>
+                            📞 +91 6362793710<br>
+                            📧 shashidharasc@kssem.edu.in
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="back-button-container">
+                <a href="/" class="view-btn">← Back to Home</a>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2024 University Rankings Portal. Data from QS World University Rankings 2024.</p>
+        </div>
+    </footer>
+
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>

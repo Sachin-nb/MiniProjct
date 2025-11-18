@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search Universities - University Rankings</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        /* Compact Search Styling */
+        .search-section {
+            padding: 1.5rem;
+            max-width: 1000px;
+            margin: 2rem auto;
+        }
+
+        .search-section h2 {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .search-form {
+            padding: 1.5rem;
+            gap: 1rem;
+            display: flex;
+            align-items: flex-end;
+        }
+
+        .search-form .form-group {
+            flex: 1;
+            margin: 0;
+        }
+
+        .search-form label {
+            font-size: 0.85rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .search-form .form-input {
+            padding: 0.5rem 0.75rem;
+            font-size: 0.9rem;
+        }
+
+        .search-form .search-btn {
+            padding: 0.5rem 2rem;
+            font-size: 0.9rem;
+            margin: 0;
+            white-space: nowrap;
+        }
+
+        .search-results {
+            margin-top: 1.5rem;
+        }
+
+        .search-results h3 {
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .compact-table .rankings-table {
+            font-size: 0.9rem;
+        }
+
+        .compact-table .rankings-table th,
+        .compact-table .rankings-table td {
+            padding: 0.75rem 0.5rem;
+        }
+
+        .compact-table .rank-cell {
+            font-size: 1.25rem;
+        }
+
+        .compact-table .score-cell {
+            font-size: 1rem;
+        }
+
+        .compact-table .view-btn {
+            padding: 0.5rem 1.25rem;
+            font-size: 0.85rem;
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 2rem;
+            margin-top: 1.5rem;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.08) 0%, rgba(118, 75, 162, 0.08) 100%);
+            border-radius: var(--radius-xl);
+        }
+
+        .no-results p {
+            color: var(--text-medium);
+            font-size: 1rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .search-form {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .search-form .search-btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <h1 class="logo">🎓 University Rankings</h1>
+            <ul class="nav-links">
+                <li><a href="/">Home</a></li>
+                <li><a href="/search">Search</a></li>
+                <li><a href="/statistics">Statistics</a></li>
+                <li><a href="/add">Add University</a></li>
+                <li><a href="/about">About</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main class="container">
+        <section class="search-section">
+
+            <h2>Search Universities</h2>
+
+            <form action="/search" method="GET" class="search-form">
+                <div class="form-group">
+                    <label for="q">University Name</label>
+                    <input type="text" id="q" name="q" value="{{ query }}" 
+                           placeholder="Enter university name..." class="form-input">
+                </div>
+                
+                <div class="form-group">
+                    <label for="country">Country</label>
+                    <input type="text" id="country" name="country" value="{{ country }}" 
+                           placeholder="Enter country..." class="form-input">
+                </div>
+                
+                <button type="submit" class="search-btn">🔍 Search</button>
+            </form>
+
+            {% if universities %}
+            <div class="search-results">
+                <h3>Found {{ universities|length }} Results</h3>
+
+                <div class="table-responsive compact-table">
+                    <table class="rankings-table">
+                        <thead>
+                            <tr>
+                                <th>Rank</th>
+                                <th>University</th>
+                                <th>Country</th>
+                                <th>Score</th>
+                                <th>Details</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for uni in universities %}
+                            <tr>
+                                <td class="rank-cell">{{ uni['Rank'] }}</td>
+                                <td class="uni-name">{{ uni['institution'] }}</td>
+                                <td>{{ uni['location'] }}</td>
+                                <td class="score-cell">{{ uni['score scaled'] }}</td>
+                                <td style="text-align: center;">
+                                    <a href="/university/{{ uni['Rank'] }}" class="view-btn">View</a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+            </div>
+
+            {% elif query or country %}
+            <div class="no-results">
+                <p>🔍 No universities found matching your search criteria.</p>
+            </div>
+            {% endif %}
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2024 University Rankings Portal. Data from World University Rankings 2024.</p>
+        </div>
+    </footer>
+
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>
