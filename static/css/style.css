@@ -1087,10 +1087,9 @@ h2 {
     padding: 3px;
     background: linear-gradient(135deg, #667eea, #764ba2);
     -webkit-mask:
-        linear-gradient(#fff 0 0) content-box, 
-        linear-gradient(#fff 0 0);
-    -webkit-mask-composite: xor;
-            mask-composite: exclude;
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+    mask-composite: exclude;
     pointer-events: none;
 }
 
@@ -1100,6 +1099,7 @@ h2 {
     font-size: 1.4rem;
     background: linear-gradient(135deg, #667eea, #764ba2);
     -webkit-background-clip: text;
+    background-clip: text;
     color: transparent;
     margin-bottom: 1.2rem;
 }
