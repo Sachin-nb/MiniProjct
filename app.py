@@ -86,7 +86,7 @@ def reorder_ranks():
 @app.route("/")
 def index():
     conn = get_db()
-    rows = conn.execute("SELECT * FROM rankings ORDER BY Rank ASC").fetchall()
+    rows = conn.execute("SELECT * FROM rankings ORDER BY Rank ASC LIMIT 50").fetchall()
     conn.close()
     return render_template("index.html", universities=rows)
 
@@ -106,10 +106,6 @@ def university_detail(rank):
 
     return render_template("university_detail.html", university=row)
 
-
-# ----------------------------------------------------
-#  SEARCH PAGE
-# ----------------------------------------------------
 @app.route("/search")
 def search():
     q = request.args.get("q", "").strip().lower()
@@ -118,18 +114,44 @@ def search():
     conn = get_db()
     c = conn.cursor()
 
+    # Case 1: No search query -> show only 10 universities
     if q == "" and country == "":
-        rows = c.execute("SELECT * FROM rankings ORDER BY Rank LIMIT 10").fetchall()
+        rows = c.execute("""
+            SELECT * FROM rankings
+            ORDER BY Rank ASC
+            LIMIT 10
+        """).fetchall()
+
+    # Case 2: Search by name only
+    elif q != "" and country == "":
+        rows = c.execute("""
+            SELECT * FROM rankings
+            WHERE LOWER(institution) LIKE ?
+            ORDER BY Rank ASC
+        """, (f"%{q}%",)).fetchall()
+
+    # Case 3: Search by country only
+    elif q == "" and country != "":
+        rows = c.execute("""
+            SELECT * FROM rankings
+            WHERE LOWER(location) LIKE ?
+            ORDER BY Rank ASC
+        """, (f"%{country}%",)).fetchall()
+
+    # Case 4: Search both name + country
     else:
         rows = c.execute("""
             SELECT * FROM rankings
             WHERE LOWER(institution) LIKE ?
-               OR LOWER(location) LIKE ?
-            ORDER BY Rank
+              AND LOWER(location) LIKE ?
+            ORDER BY Rank ASC
         """, (f"%{q}%", f"%{country}%")).fetchall()
 
     conn.close()
-    return render_template("search.html", universities=rows, query=q, country=country)
+    return render_template("search.html",
+                           universities=rows,
+                           query=q,
+                           country=country)
 
 
 # ----------------------------------------------------
@@ -296,7 +318,7 @@ def delete_university(rank):
 
     reorder_ranks()
 
-    flash("University deleted!", "success")
+    flash("University deleted successfully!", "success")
     return redirect(url_for("index"))
 
 
