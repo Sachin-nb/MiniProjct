@@ -151,8 +151,8 @@
                                 Rank
                                 <span class="sort-icon">▼</span>
                                 <div class="sort-dropdown" id="rankSort">
-                                    <div class="sort-option" data-sort="rank-asc">1 → 100 (Low to High)</div>
-                                    <div class="sort-option" data-sort="rank-desc">100 → 1 (High to Low)</div>
+                                    <div class="sort-option" data-sort="rank-asc">1 → 50 (Low to High)</div>
+                                    <div class="sort-option" data-sort="rank-desc">50 → 1 (High to Low)</div>
                                 </div>
                             </th>
 
@@ -195,40 +195,80 @@
         </div>
     </footer>
 
-   <script>
+  <script>
+    // ===========================
+    // FLASH MESSAGE AUTO-HIDE
+    // ===========================
+    setTimeout(function() {
+        let flash = document.querySelector(".flash-message");
+        if (flash) {
+            flash.style.transition = "opacity 0.5s ease";
+            flash.style.opacity = "0";
+            setTimeout(() => flash.remove(), 500);
+        }
+    }, 3000); // 3 seconds
+
     // ===================================
-    // TABLE SORTING FUNCTIONALITY
+    // TABLE SORTING DROPDOWN BEHAVIOUR
     // ===================================
 
     const sortable = document.querySelectorAll(".sortable");
     let currentDropdown = null;
+    let dropdownHover = false;
 
+    // OPEN dropdown on hover OR click
     sortable.forEach(header => {
         const dropdown = header.querySelector(".sort-dropdown");
 
-        // OPEN dropdown on click
-        header.addEventListener("click", function(e) {
-            e.stopPropagation();
-
+        // When mouse enters header → open dropdown
+        header.addEventListener("mouseenter", () => {
             if (currentDropdown && currentDropdown !== dropdown) {
                 currentDropdown.classList.remove("active");
             }
+            dropdown.classList.add("active");
+            currentDropdown = dropdown;
+        });
 
+        // When mouse leaves header → close only if not hovering dropdown
+        header.addEventListener("mouseleave", () => {
+            setTimeout(() => {
+                if (!dropdownHover) {
+                    dropdown.classList.remove("active");
+                    currentDropdown = null;
+                }
+            }, 80);
+        });
+
+        // Allow click toggle also
+        header.addEventListener("click", function (e) {
+            e.stopPropagation();
             dropdown.classList.toggle("active");
             currentDropdown = dropdown.classList.contains("active") ? dropdown : null;
         });
     });
 
-    // KEEP dropdown open when mouse is inside
+    // KEEP DROPDOWN OPEN WHILE HOVERING INSIDE
     document.querySelectorAll(".sort-dropdown").forEach(menu => {
         menu.addEventListener("mouseenter", () => {
-            if (currentDropdown) {
-                currentDropdown.classList.add("active");
-            }
+            dropdownHover = true;
+            if (currentDropdown) currentDropdown.classList.add("active");
+        });
+
+        menu.addEventListener("mouseleave", () => {
+            dropdownHover = false;
+
+            setTimeout(() => {
+                if (!dropdownHover) {
+                    if (currentDropdown) {
+                        currentDropdown.classList.remove("active");
+                        currentDropdown = null;
+                    }
+                }
+            }, 80);
         });
     });
 
-    // CLOSE dropdown if clicked outside
+    // CLOSE ONLY IF CLICKED OUTSIDE COMPLETELY
     document.addEventListener("click", function (e) {
         if (!e.target.closest(".sortable")) {
             if (currentDropdown) {
@@ -239,68 +279,62 @@
     });
 
     // ===================================
-    // ACTUAL SORTING LOGIC
+    // ACTUAL TABLE SORTING LOGIC
     // ===================================
 
-    document.querySelectorAll('.sort-option').forEach(option => {
-        option.addEventListener('click', function(e) {
-            e.stopPropagation();
-            
-            const sortType = this.getAttribute('data-sort');
-            const table = document.getElementById('uniTable');
-            const tbody = table.querySelector('tbody');
-            const rows = Array.from(tbody.querySelectorAll('tr'));
-            
-            // Sort the rows based on the sort type
-            rows.sort((a, b) => {
-                let valA, valB;
-                
-                if (sortType.startsWith('rank-')) {
-                    valA = parseInt(a.getAttribute('data-rank'));
-                    valB = parseInt(b.getAttribute('data-rank'));
-                } else if (sortType.startsWith('score-')) {
-                    valA = parseFloat(a.getAttribute('data-score'));
-                    valB = parseFloat(b.getAttribute('data-score'));
-                }
-                
-                // Ascending or Descending
-                if (sortType.endsWith('-asc')) {
-                    return valA - valB;
-                } else {
-                    return valB - valA;
-                }
-            });
-            
-            // Clear tbody and append sorted rows
-            tbody.innerHTML = '';
-            rows.forEach(row => tbody.appendChild(row));
-            
-            // Close dropdown after sorting
+    const table = document.getElementById("uniTable");
+    const tbody = table ? table.querySelector("tbody") : null;
+
+    function sortTable(by, direction) {
+        if (!tbody) return;
+
+        const rows = Array.from(tbody.querySelectorAll("tr"));
+        
+
+        rows.sort((a, b) => {
+            let va, vb;
+
+            if (by === "rank") {
+                va = parseInt(a.dataset.rank || a.children[0].textContent) || 0;
+                vb = parseInt(b.dataset.rank || b.children[0].textContent) || 0;
+            } else { // score
+                va = parseFloat(a.dataset.score || a.children[3].textContent) || 0;
+                vb = parseFloat(b.dataset.score || b.children[3].textContent) || 0;
+            }
+
+            if (direction === "asc") {
+                return va - vb;
+            } else {
+                return vb - va;
+            }
+        });
+
+        rows.forEach(row => tbody.appendChild(row));
+    }
+
+    // Connect dropdown options to sorting
+    document.querySelectorAll(".sort-option").forEach(option => {
+        option.addEventListener("click", () => {
+            const sortType = option.dataset.sort;
+
+            if (sortType === "rank-asc") {
+                sortTable("rank", "asc");
+            } else if (sortType === "rank-desc") {
+                sortTable("rank", "desc");
+            } else if (sortType === "score-asc") {
+                sortTable("score", "asc");
+            } else if (sortType === "score-desc") {
+                sortTable("score", "desc");
+            }
+
+            // Close dropdown after choosing
             if (currentDropdown) {
                 currentDropdown.classList.remove("active");
                 currentDropdown = null;
             }
-            
-            // Visual feedback
-            showToast('Table sorted successfully!', 'success');
         });
     });
-
-    // Toast notification function
-    function showToast(message, type = 'info') {
-        const toast = document.createElement('div');
-        toast.className = `toast toast-${type}`;
-        toast.textContent = message;
-
-        document.body.appendChild(toast);
-
-        setTimeout(() => {
-            toast.classList.add('fade-out');
-            setTimeout(() => toast.remove(), 500);
-        }, 2000);
-    }
-</script>
-
+  </script>
 
 </body>
 </html>
