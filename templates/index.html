@@ -1,340 +1,59 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>World University Rankings 2024</title>
+{% extends "base.html" %}
+{% block content %}
+<div class="hero-banner d-flex align-items-center justify-content-between p-4">
+  <div class="hero-text">
+    <h2>Qualitron Laptops - Corporate Offers</h2>
+    <p>Exclusive corporate discount, trade-ins and finance options.</p>
+    <a href="{{ url_for('shop') }}" class="btn btn-dark">Shop Now</a>
+  </div>
+  <div>
+    <img src="{{ url_for('static', filename='images/slide1.jpg') }}" class="hero-img" alt="Hero">
+  </div>
+</div>
 
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
-      rel="stylesheet">
+<h3 class="mt-4">Featured Products</h3>
+<div class="row g-3 mt-2">
+  {% for p in featured %}
+  <div class="col-6 col-md-4 col-lg-3">
+    <div class="product-card p-3">
+      <img src="{{ url_for('static', filename='images/' ~ p.image) }}" alt="{{ p.Product }}" style="width:100%;height:140px;object-fit:contain;">
+      <h5 class="mt-2">{{ p.Company }} {{ p.Product }}</h5>
+      <p class="price">₹ {{ p.price_inr }}</p>
+      <button class="buy-now-btn btn btn-dark w-100"
+        data-id="{{ p.id }}"
+        data-name="{{ p.Company }} {{ p.Product }}"
+        data-price="{{ p.price_inr }}"
+        data-image="{{ url_for('static', filename='images/' ~ p.image) }}">
+        Buy Now
+      </button>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+<script>
+document.querySelectorAll('.buy-now-btn').forEach(button => {
+  button.addEventListener('click', function() {
+    const id = this.dataset.id;
+    const name = this.dataset.name;
+    const price = parseInt(this.dataset.price);
+    const image = this.dataset.image;
     
-    <style>
-        /* Modern Sortable Column Styling */
-        th.sortable {
-            cursor: pointer;
-            user-select: none;
-            transition: background 0.2s ease;
-            position: relative;
-        }
+    let cart = JSON.parse(localStorage.getItem("cart")) || [];
 
-        th.sortable:hover {
-            background: rgba(102, 126, 234, 0.2);
-        }
-
-        /* Modern Sort Icon */
-        .sort-icon {
-            transition: all 0.3s ease;
-            margin-left: 6px;
-            font-size: 0.75rem;
-        }
-
-        th.sortable:hover .sort-icon {
-            transform: scale(1.2);
-        }
-
-        /* Modern Dropdown */
-        .sort-dropdown {
-            position: absolute;
-            top: calc(100% + 8px);
-            left: 0;
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
-            min-width: 200px;
-            opacity: 0;
-            visibility: hidden;
-            transform: translateY(-10px);
-            transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-            z-index: 1000;
-            overflow: hidden;
-        }
-
-        .sort-dropdown.active {
-            opacity: 1;
-            visibility: visible;
-            transform: translateY(0);
-        }
-
-        /* Modern Sort Options */
-        .sort-option {
-            padding: 14px 18px;
-            color: #4a5568;
-            font-size: 0.875rem;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            position: relative;
-        }
-
-        .sort-option::before {
-            content: '';
-            width: 4px;
-            height: 0;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-radius: 2px;
-            position: absolute;
-            left: 0;
-            transition: height 0.2s ease;
-        }
-
-        .sort-option:hover {
-            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
-            color: #667eea;
-            padding-left: 24px;
-        }
-
-        .sort-option:hover::before {
-            height: 100%;
-        }
-
-        .sort-option:not(:last-child) {
-            border-bottom: 1px solid #f0f0f0;
-        }
-    </style>
-</head>
-
-<body>
-
-    <nav class="navbar compact-navbar">
-        <div class="container">
-            <h1 class="logo">🎓 University Rankings</h1>
-            <ul class="nav-links">
-                <li><a href="/">Home</a></li>
-                <li><a href="/search">Search</a></li>
-                <li><a href="/statistics">Statistics</a></li>
-                <li><a href="/add">Add University</a></li>
-                <li><a href="/about">About</a></li>
-            </ul>
-        </div>
-    </nav>
-
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-        <div class="flash-messages compact-box">
-            {% for category, message in messages %}
-            <div class="flash-message {{ category }}">{{ message }}</div>
-            {% endfor %}
-        </div>
-        {% endif %}
-    {% endwith %}
-
-    <header class="hero compact-hero">
-        <div class="container">
-            <h1>World University Rankings 2024</h1>
-            <p>Explore the top universities around the world</p>
-
-            <div class="search-box compact-search-box">
-                <form action="/search" method="GET">
-                    <input type="text" name="q" placeholder="Search universities..." class="search-input compact-input">
-                    <button type="submit" class="search-btn compact-btn">Search</button>
-                </form>
-            </div>
-        </div>
-    </header>
-
-    <main class="container">
-        <section class="rankings compact-box">
-            <h2>Top 100 Universities</h2>
-
-            <div class="table-responsive compact-table">
-                <table class="rankings-table compact-table-inner" id="uniTable">
-                    <thead>
-                        <tr>
-                            <th class="sortable" data-column="rank">
-                                Rank
-                                <span class="sort-icon">▼</span>
-                                <div class="sort-dropdown" id="rankSort">
-                                    <div class="sort-option" data-sort="rank-asc">1 → 50 (Low to High)</div>
-                                    <div class="sort-option" data-sort="rank-desc">50 → 1 (High to Low)</div>
-                                </div>
-                            </th>
-
-                            <th>University</th>
-                            <th>Country</th>
-
-                            <th class="sortable" data-column="score">
-                                Score
-                                <span class="sort-icon">▼</span>
-                                <div class="sort-dropdown" id="scoreSort">
-                                    <div class="sort-option" data-sort="score-asc">Low → High</div>
-                                    <div class="sort-option" data-sort="score-desc">High → Low</div>
-                                </div>
-                            </th>
-
-                            <th>Details</th>
-                        </tr>
-                    </thead>
-
-                    <tbody>
-                        {% for uni in universities %}
-                        <tr data-rank="{{ uni['Rank'] }}" data-score="{{ uni['score scaled'] }}">
-                            <td>{{ uni['Rank'] }}</td>
-                            <td class="uni-name">{{ uni['institution'] }}</td>
-                            <td>{{ uni['location'] }}</td>
-                            <td>{{ uni['score scaled'] }}</td>
-                            <td><a href="/university/{{ uni['Rank'] }}" class="view-btn compact-view-btn">View</a></td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-
-                </table>
-            </div>
-        </section>
-    </main>
-
-    <footer class="footer compact-footer">
-        <div class="container">
-            <p>&copy; 2024 University Rankings Portal. Data from World University Rankings 2024.</p>
-        </div>
-    </footer>
-
-  <script>
-    // ===========================
-    // FLASH MESSAGE AUTO-HIDE
-    // ===========================
-    setTimeout(function() {
-        let flash = document.querySelector(".flash-message");
-        if (flash) {
-            flash.style.transition = "opacity 0.5s ease";
-            flash.style.opacity = "0";
-            setTimeout(() => flash.remove(), 500);
-        }
-    }, 3000); // 3 seconds
-
-    // ===================================
-    // TABLE SORTING DROPDOWN BEHAVIOUR
-    // ===================================
-
-    const sortable = document.querySelectorAll(".sortable");
-    let currentDropdown = null;
-    let dropdownHover = false;
-
-    // OPEN dropdown on hover OR click
-    sortable.forEach(header => {
-        const dropdown = header.querySelector(".sort-dropdown");
-
-        // When mouse enters header → open dropdown
-        header.addEventListener("mouseenter", () => {
-            if (currentDropdown && currentDropdown !== dropdown) {
-                currentDropdown.classList.remove("active");
-            }
-            dropdown.classList.add("active");
-            currentDropdown = dropdown;
-        });
-
-        // When mouse leaves header → close only if not hovering dropdown
-        header.addEventListener("mouseleave", () => {
-            setTimeout(() => {
-                if (!dropdownHover) {
-                    dropdown.classList.remove("active");
-                    currentDropdown = null;
-                }
-            }, 80);
-        });
-
-        // Allow click toggle also
-        header.addEventListener("click", function (e) {
-            e.stopPropagation();
-            dropdown.classList.toggle("active");
-            currentDropdown = dropdown.classList.contains("active") ? dropdown : null;
-        });
-    });
-
-    // KEEP DROPDOWN OPEN WHILE HOVERING INSIDE
-    document.querySelectorAll(".sort-dropdown").forEach(menu => {
-        menu.addEventListener("mouseenter", () => {
-            dropdownHover = true;
-            if (currentDropdown) currentDropdown.classList.add("active");
-        });
-
-        menu.addEventListener("mouseleave", () => {
-            dropdownHover = false;
-
-            setTimeout(() => {
-                if (!dropdownHover) {
-                    if (currentDropdown) {
-                        currentDropdown.classList.remove("active");
-                        currentDropdown = null;
-                    }
-                }
-            }, 80);
-        });
-    });
-
-    // CLOSE ONLY IF CLICKED OUTSIDE COMPLETELY
-    document.addEventListener("click", function (e) {
-        if (!e.target.closest(".sortable")) {
-            if (currentDropdown) {
-                currentDropdown.classList.remove("active");
-                currentDropdown = null;
-            }
-        }
-    });
-
-    // ===================================
-    // ACTUAL TABLE SORTING LOGIC
-    // ===================================
-
-    const table = document.getElementById("uniTable");
-    const tbody = table ? table.querySelector("tbody") : null;
-
-    function sortTable(by, direction) {
-        if (!tbody) return;
-
-        const rows = Array.from(tbody.querySelectorAll("tr"));
-        
-
-        rows.sort((a, b) => {
-            let va, vb;
-
-            if (by === "rank") {
-                va = parseInt(a.dataset.rank || a.children[0].textContent) || 0;
-                vb = parseInt(b.dataset.rank || b.children[0].textContent) || 0;
-            } else { // score
-                va = parseFloat(a.dataset.score || a.children[3].textContent) || 0;
-                vb = parseFloat(b.dataset.score || b.children[3].textContent) || 0;
-            }
-
-            if (direction === "asc") {
-                return va - vb;
-            } else {
-                return vb - va;
-            }
-        });
-
-        rows.forEach(row => tbody.appendChild(row));
+    // Check if item already exists
+    let existing = cart.find(item => item.id === id);
+    if (existing) {
+      existing.quantity++;
+    } else {
+      cart.push({ id, name, price, quantity: 1, image });
     }
 
-    // Connect dropdown options to sorting
-    document.querySelectorAll(".sort-option").forEach(option => {
-        option.addEventListener("click", () => {
-            const sortType = option.dataset.sort;
+    // Save updated cart
+    localStorage.setItem("cart", JSON.stringify(cart));
 
-            if (sortType === "rank-asc") {
-                sortTable("rank", "asc");
-            } else if (sortType === "rank-desc") {
-                sortTable("rank", "desc");
-            } else if (sortType === "score-asc") {
-                sortTable("score", "asc");
-            } else if (sortType === "score-desc") {
-                sortTable("score", "desc");
-            }
-
-            // Close dropdown after choosing
-            if (currentDropdown) {
-                currentDropdown.classList.remove("active");
-                currentDropdown = null;
-            }
-        });
-    });
-  </script>
-
-</body>
-</html>
+    // Redirect to cart
+    window.location.href = "{{ url_for('cart') }}";
+  });
+});
+</script>
+{% endblock %}
